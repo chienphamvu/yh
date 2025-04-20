@@ -15,9 +15,15 @@ func (l *yamlLine) isKeyValue() bool {
 	if strings.Contains(l.raw, "://") {
 		// It's a URL not k/v
 
-		return false
+		trimmed := strings.ReplaceAll(l.raw, "://", "")
+		if ! strings.Contains(trimmed, ":") {
+			return false
+		}
+		// if after "://" is removed and there is still ":", then it's highly a k/v
+		// do nothing in this case and move to the below if
+	}
 
-	} else if strings.Contains(l.raw, ":") {
+	if strings.Contains(l.raw, ":") {
 		// Contains the separator but it might not be a k/v
 
 		// Split the string
@@ -68,7 +74,16 @@ func (l yamlLine) valueIsBoolean() bool {
 }
 
 func (l yamlLine) valueIsNumberOrIP() bool {
-	_, err := strconv.Atoi(strings.ReplaceAll(l.value, ".", ""))
+	value := strings.ReplaceAll(l.value, ".", "")
+	// Also check if it's a date time - treat it the same color as number
+	value = strings.ReplaceAll(value, "-", "")
+	value = strings.ReplaceAll(value, "T", "")
+	value = strings.ReplaceAll(value, "+", "")
+	value = strings.ReplaceAll(value, ":", "")
+	// also check number inside single quotes as numer
+	value = strings.ReplaceAll(value, "'", "")
+
+	_, err := strconv.Atoi(value)
 	if err == nil {
 		// Line is a number or IP
 		return true
